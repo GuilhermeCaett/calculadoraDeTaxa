@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
 import './global.css';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,32 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 function App() {
   const [cotacao, setCotacao] = useState(0);
-  const [estado, setEstado] = useState(""); // Estado para armazenar o estado selecionado
+  const [estado, setEstado] = useState(""); // Armazena o estado selecionado
 
-  // Função para buscar a cotação do Dólar
   async function fetchCotacao() {
     try {
       const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
       const data = await response.json();
-      setCotacao(parseFloat(data.USDBRL.bid)); // Armazena a cotação no estado
-      // console.log(`Cotação atual do Dólar: R$ ${cotacao.toFixed(2)}`);
+      setCotacao(parseFloat(data.USDBRL.bid));
+      console.log(`Cotação atual do Dólar: R$ ${cotacao.toFixed(2)}`);
     } catch (error) {
       document.getElementById('cotacao').innerText = 'Erro ao carregar a cotação';
       console.error('Erro ao buscar a cotação:', error);
     }
   }
 
-  useEffect(() => {
-    fetchCotacao(); // Busca a cotação inicialmente
-    const intervalId = setInterval(fetchCotacao, 30000); // Atualiza a cada 30 segundos
-    return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado
-  }, []);
+  fetchCotacao();
+  setInterval(fetchCotacao, 30000);
 
   function calcularTaxa() {
-    let declaracao = document.getElementById('valor').value;
+    const declaracao = document.getElementById('valor').value;
 
-    // Ajusta o valor do ICMS conforme o estado selecionado
-    let icms = 18; // Valor padrão
+    let icms = 18;
     switch (estado) {
       case "SP":
         icms = 18;
@@ -56,20 +51,27 @@ function App() {
         icms = 17;
         break;
       default:
-        icms = 18; // Caso não seja selecionado um estado válido
+        icms = 18;
         break;
     }
 
-    const valorReais = declaracao * cotacao; // Multiplica o valor declarado pela cotação atual
-    const taxaImportacao = 60; // 60% de taxa de importação
+    const valorReais = declaracao * cotacao;
+    const taxaImportacao = 60;
     const valorTaxaImportacao = valorReais * (taxaImportacao / 100);
-
     const valorICMS = valorReais * (icms / 100);
     const valorTotal = valorTaxaImportacao + valorICMS;
 
     document.getElementById('taxa').innerText = 'Você será taxado cerca de: R$ ' + valorTotal.toFixed(2);
     document.getElementById('aviso').innerText = 'Aviso: O valor é estimado. A cotação do dólar no momento da taxação pode variar.';
   }
+
+  const handleSelectOpenChange = (open) => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -96,14 +98,14 @@ function App() {
             <Label htmlFor="estado" className="block text-gray-700">
               Selecione seu estado
             </Label>
-            <Select onValueChange={(value) => setEstado(value)}>
+            <Select onOpenChange={handleSelectOpenChange} onValueChange={setEstado}>
               <SelectTrigger
                 id="estado"
                 className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <SelectValue placeholder="Escolha seu estado" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent portalled={true} position="popper">
                 <SelectItem value="AC">Acre</SelectItem>
                 <SelectItem value="AL">Alagoas</SelectItem>
                 <SelectItem value="AP">Amapá</SelectItem>
